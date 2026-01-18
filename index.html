@@ -1,1 +1,324 @@
-Hello World!
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サイコロ予測ゲーム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .game-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        input[type="number"] {
+            width: 100px;
+            padding: 10px;
+            font-size: 1.5em;
+            text-align: center;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        input[type="number"]:focus {
+            border-color: #764ba2;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .dice-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .dice {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .dice.rolling {
+            animation: roll 0.5s ease-in-out;
+        }
+
+        @keyframes roll {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(90deg); }
+            50% { transform: rotate(180deg); }
+            75% { transform: rotate(270deg); }
+        }
+
+        .result {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.2em;
+        }
+
+        .result.hidden {
+            display: none;
+        }
+
+        .result.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .result.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .total {
+            text-align: center;
+            font-size: 1.5em;
+            color: #333;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .info {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 サイコロ予測ゲーム 🎲</h1>
+
+        <div class="input-section">
+            <label for="prediction">3つのサイコロの合計を予測してください (3〜18)</label>
+            <input type="number" id="prediction" min="3" max="18" value="10">
+            <br>
+            <button id="rollButton" onclick="rollDice()">サイコロを振る！</button>
+        </div>
+
+        <div class="dice-container" id="diceContainer">
+            <div class="dice" id="dice1">?</div>
+            <div class="dice" id="dice2">?</div>
+            <div class="dice" id="dice3">?</div>
+        </div>
+
+        <div class="total" id="total"></div>
+
+        <div class="result hidden" id="result"></div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="correctCount">0</div>
+                <div class="stat-label">正解</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalGames">0</div>
+                <div class="stat-label">挑戦回数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="winRate">0%</div>
+                <div class="stat-label">正解率</div>
+            </div>
+        </div>
+
+        <div class="info">
+            ヒント: 最も出やすい合計は 10 と 11 です！
+        </div>
+    </div>
+
+    <script>
+        let correctCount = 0;
+        let totalGames = 0;
+
+        function rollDice() {
+            const prediction = parseInt(document.getElementById('prediction').value);
+
+            if (prediction < 3 || prediction > 18) {
+                alert('3から18の数字を入力してください！');
+                return;
+            }
+
+            const rollButton = document.getElementById('rollButton');
+            rollButton.disabled = true;
+
+            const dice1 = document.getElementById('dice1');
+            const dice2 = document.getElementById('dice2');
+            const dice3 = document.getElementById('dice3');
+            const resultDiv = document.getElementById('result');
+            const totalDiv = document.getElementById('total');
+
+            // アニメーション開始
+            dice1.classList.add('rolling');
+            dice2.classList.add('rolling');
+            dice3.classList.add('rolling');
+
+            resultDiv.classList.add('hidden');
+            totalDiv.textContent = '';
+
+            // ランダムな数字を表示するアニメーション
+            let counter = 0;
+            const animationInterval = setInterval(() => {
+                dice1.textContent = Math.floor(Math.random() * 6) + 1;
+                dice2.textContent = Math.floor(Math.random() * 6) + 1;
+                dice3.textContent = Math.floor(Math.random() * 6) + 1;
+                counter++;
+
+                if (counter >= 10) {
+                    clearInterval(animationInterval);
+                    showResult();
+                }
+            }, 100);
+
+            function showResult() {
+                // 最終的な結果を決定
+                const result1 = Math.floor(Math.random() * 6) + 1;
+                const result2 = Math.floor(Math.random() * 6) + 1;
+                const result3 = Math.floor(Math.random() * 6) + 1;
+                const total = result1 + result2 + result3;
+
+                dice1.textContent = result1;
+                dice2.textContent = result2;
+                dice3.textContent = result3;
+
+                dice1.classList.remove('rolling');
+                dice2.classList.remove('rolling');
+                dice3.classList.remove('rolling');
+
+                totalDiv.textContent = `合計: ${total}`;
+
+                // 結果判定
+                totalGames++;
+                if (prediction === total) {
+                    correctCount++;
+                    resultDiv.textContent = `🎉 正解！予測: ${prediction} = 合計: ${total}`;
+                    resultDiv.className = 'result correct';
+                } else {
+                    resultDiv.textContent = `残念！予測: ${prediction} ≠ 合計: ${total}`;
+                    resultDiv.className = 'result incorrect';
+                }
+
+                // 統計更新
+                document.getElementById('correctCount').textContent = correctCount;
+                document.getElementById('totalGames').textContent = totalGames;
+                const winRate = totalGames > 0 ? Math.round((correctCount / totalGames) * 100) : 0;
+                document.getElementById('winRate').textContent = winRate + '%';
+
+                rollButton.disabled = false;
+            }
+        }
+
+        // Enterキーでもサイコロを振れるようにする
+        document.getElementById('prediction').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                rollDice();
+            }
+        });
+    </script>
+</body>
+</html>
