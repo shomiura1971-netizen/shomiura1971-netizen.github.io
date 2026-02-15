@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Tools</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        a { color: #64b5f6; }
+        .back-link { display: inline-block; margin-bottom: 16px; font-size: 0.95em; }
+        h1 { text-align: center; color: #80cbc4; margin-bottom: 8px; font-size: 1.8em; }
+        .subtitle { text-align: center; color: #90a4ae; margin-bottom: 24px; font-size: 0.95em; }
+
+        /* Tabs */
+        .tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+        .tab-btn {
+            padding: 10px 24px; border: 2px solid #80cbc4; border-radius: 8px;
+            background: transparent; color: #80cbc4; font-size: 1em; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { background: rgba(128,203,196,0.15); }
+        .tab-btn.active { background: #80cbc4; color: #0f2027; font-weight: bold; }
+        .panel { display: none; max-width: 700px; margin: 0 auto; }
+        .panel.active { display: block; }
+
+        /* Card */
+        .card {
+            background: rgba(255,255,255,0.07);
+            border-radius: 16px; padding: 28px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            margin-bottom: 20px;
+        }
+        h2 { color: #80cbc4; margin-bottom: 16px; font-size: 1.3em; }
+        h3 { color: #b2dfdb; margin: 16px 0 8px; font-size: 1.1em; }
+
+        /* Form elements */
+        label { display: block; margin-bottom: 6px; color: #b0bec5; font-size: 0.95em; }
+        select, input[type="number"], textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid #546e7a;
+            border-radius: 8px; background: rgba(0,0,0,0.3); color: #e0e0e0;
+            font-size: 1em; outline: none; transition: border-color 0.2s;
+        }
+        select:focus, input[type="number"]:focus, textarea:focus { border-color: #80cbc4; }
+        textarea { resize: vertical; font-family: monospace; }
+
+        .row { display: flex; gap: 16px; margin-bottom: 12px; }
+        .row > div { flex: 1; }
+        @media (max-width: 500px) { .row { flex-direction: column; } }
+
+        /* Metric */
+        .metrics { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+        .metric {
+            flex: 1; min-width: 100px; background: rgba(128,203,196,0.1);
+            border-radius: 10px; padding: 14px; text-align: center;
+        }
+        .metric-value { font-size: 1.8em; font-weight: bold; color: #80cbc4; }
+        .metric-label { font-size: 0.8em; color: #90a4ae; margin-top: 4px; }
+
+        /* Button */
+        .btn {
+            display: inline-block; padding: 12px 32px; border: none; border-radius: 8px;
+            background: linear-gradient(135deg, #00897b, #26a69a); color: #fff;
+            font-size: 1em; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,137,123,0.4); }
+        .btn:active { transform: translateY(0); }
+
+        /* Bar chart */
+        .bar-chart { display: flex; align-items: flex-end; gap: 3px; height: 140px; margin-top: 12px; padding: 0 4px; }
+        .bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; }
+        .bar {
+            width: 100%; min-height: 2px; background: linear-gradient(180deg, #80cbc4, #00897b);
+            border-radius: 3px 3px 0 0; transition: height 0.4s;
+        }
+        .bar-label { font-size: 0.7em; color: #90a4ae; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Table */
+        .table-wrap { overflow-x: auto; margin-top: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        th { background: rgba(128,203,196,0.2); color: #80cbc4; padding: 8px; text-align: left; }
+        td { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        tr:hover td { background: rgba(255,255,255,0.03); }
+
+        /* Slider */
+        input[type="range"] {
+            width: 100%; accent-color: #80cbc4; margin: 4px 0;
+        }
+        .slider-row { display: flex; align-items: center; gap: 12px; }
+        .slider-row input[type="range"] { flex: 1; }
+        .slider-val { min-width: 36px; text-align: right; color: #80cbc4; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">&larr; トップに戻る</a>
+    <h1>Interactive Tools</h1>
+    <p class="subtitle">ブラウザで動くインタラクティブツール集</p>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('converter')">単位変換</button>
+        <button class="tab-btn" onclick="switchTab('text')">テキスト分析</button>
+        <button class="tab-btn" onclick="switchTab('datagen')">データ生成</button>
+    </div>
+
+    <!-- ===== Unit Converter ===== -->
+    <div id="panel-converter" class="panel active">
+        <div class="card">
+            <h2>単位変換ツール</h2>
+            <div class="row">
+                <div>
+                    <label for="conv-category">カテゴリ</label>
+                    <select id="conv-category" onchange="updateConverterUnits()">
+                        <option value="length">長さ</option>
+                        <option value="weight">重さ</option>
+                        <option value="temperature">温度</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label for="conv-from">変換元</label>
+                    <select id="conv-from" onchange="convert()"></select>
+                </div>
+                <div>
+                    <label for="conv-to">変換先</label>
+                    <select id="conv-to" onchange="convert()"></select>
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label for="conv-value">値</label>
+                    <input type="number" id="conv-value" value="1" step="any" oninput="convert()">
+                </div>
+                <div>
+                    <label>結果</label>
+                    <div class="metric" style="margin:0">
+                        <div class="metric-value" id="conv-result">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Text Analyzer ===== -->
+    <div id="panel-text" class="panel">
+        <div class="card">
+            <h2>テキスト分析ツール</h2>
+            <label for="text-input">テキストを入力してください</label>
+            <textarea id="text-input" rows="6" placeholder="ここにテキストを入力..." oninput="analyzeText()"></textarea>
+            <div class="metrics" id="text-metrics">
+                <div class="metric"><div class="metric-value" id="tm-chars">0</div><div class="metric-label">文字数</div></div>
+                <div class="metric"><div class="metric-value" id="tm-nospace">0</div><div class="metric-label">空白なし</div></div>
+                <div class="metric"><div class="metric-value" id="tm-words">0</div><div class="metric-label">単語数</div></div>
+                <div class="metric"><div class="metric-value" id="tm-lines">0</div><div class="metric-label">行数</div></div>
+            </div>
+            <h3>文字頻度（上位20）</h3>
+            <div class="bar-chart" id="text-chart"></div>
+        </div>
+    </div>
+
+    <!-- ===== Random Data Generator ===== -->
+    <div id="panel-datagen" class="panel">
+        <div class="card">
+            <h2>ランダムデータ生成</h2>
+            <div class="row">
+                <div>
+                    <label>行数</label>
+                    <div class="slider-row">
+                        <input type="range" id="dg-rows" min="10" max="200" value="50" oninput="document.getElementById('dg-rows-val').textContent=this.value">
+                        <span class="slider-val" id="dg-rows-val">50</span>
+                    </div>
+                </div>
+                <div>
+                    <label>列数</label>
+                    <div class="slider-row">
+                        <input type="range" id="dg-cols" min="1" max="8" value="3" oninput="document.getElementById('dg-cols-val').textContent=this.value">
+                        <span class="slider-val" id="dg-cols-val">3</span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label for="dg-dist">分布</label>
+                    <select id="dg-dist">
+                        <option value="normal">正規分布</option>
+                        <option value="uniform">一様分布</option>
+                        <option value="exponential">指数分布</option>
+                    </select>
+                </div>
+                <div style="display:flex;align-items:flex-end">
+                    <button class="btn" onclick="generateData()">生成する</button>
+                </div>
+            </div>
+            <div id="dg-output"></div>
+        </div>
+    </div>
+
+    <script>
+    // ========== Tab switching ==========
+    function switchTab(name) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('panel-' + name).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    // ========== Unit Converter ==========
+    const units = {
+        length: { 'メートル': 1, 'キロメートル': 0.001, 'センチメートル': 100, 'マイル': 0.000621371, 'フィート': 3.28084, 'インチ': 39.3701 },
+        weight: { 'キログラム': 1, 'グラム': 1000, 'ポンド': 2.20462, 'オンス': 35.274, 'トン': 0.001 },
+        temperature: { '℃': 'c', '℉': 'f', 'K': 'k' }
+    };
+
+    function updateConverterUnits() {
+        const cat = document.getElementById('conv-category').value;
+        const fromSel = document.getElementById('conv-from');
+        const toSel = document.getElementById('conv-to');
+        const names = Object.keys(units[cat]);
+        [fromSel, toSel].forEach((sel, i) => {
+            sel.innerHTML = names.map((n, j) => `<option value="${n}" ${j === i ? 'selected' : ''}>${n}</option>`).join('');
+        });
+        convert();
+    }
+
+    function convert() {
+        const cat = document.getElementById('conv-category').value;
+        const from = document.getElementById('conv-from').value;
+        const to = document.getElementById('conv-to').value;
+        const val = parseFloat(document.getElementById('conv-value').value);
+        if (isNaN(val)) { document.getElementById('conv-result').textContent = '—'; return; }
+
+        let result;
+        if (cat === 'temperature') {
+            let c;
+            if (from === '℃') c = val;
+            else if (from === '℉') c = (val - 32) * 5 / 9;
+            else c = val - 273.15;
+            if (to === '℃') result = c;
+            else if (to === '℉') result = c * 9 / 5 + 32;
+            else result = c + 273.15;
+        } else {
+            result = val / units[cat][from] * units[cat][to];
+        }
+        document.getElementById('conv-result').textContent = parseFloat(result.toPrecision(8));
+    }
+    updateConverterUnits();
+
+    // ========== Text Analyzer ==========
+    function analyzeText() {
+        const text = document.getElementById('text-input').value;
+        document.getElementById('tm-chars').textContent = text.length;
+        document.getElementById('tm-nospace').textContent = text.replace(/\s/g, '').length;
+        document.getElementById('tm-words').textContent = text.trim() ? text.trim().split(/\s+/).length : 0;
+        document.getElementById('tm-lines').textContent = text ? text.split('\n').length : 0;
+
+        // Character frequency
+        const freq = {};
+        for (const ch of text.toLowerCase()) {
+            if (/[a-zぁ-んァ-ヶ亜-熙]/.test(ch)) {
+                freq[ch] = (freq[ch] || 0) + 1;
+            }
+        }
+        const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 20);
+        const chart = document.getElementById('text-chart');
+        if (sorted.length === 0) { chart.innerHTML = '<span style="color:#546e7a">テキストを入力すると文字頻度が表示されます</span>'; return; }
+        const max = sorted[0][1];
+        chart.innerHTML = sorted.map(([ch, cnt]) =>
+            `<div class="bar-col"><div class="bar" style="height:${(cnt/max)*120}px" title="${ch}: ${cnt}"></div><div class="bar-label">${ch}</div></div>`
+        ).join('');
+    }
+    analyzeText();
+
+    // ========== Random Data Generator ==========
+    function randn() {
+        let u = 0, v = 0;
+        while (u === 0) u = Math.random();
+        while (v === 0) v = Math.random();
+        return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    }
+
+    function generateData() {
+        const rows = parseInt(document.getElementById('dg-rows').value);
+        const cols = parseInt(document.getElementById('dg-cols').value);
+        const dist = document.getElementById('dg-dist').value;
+
+        const data = [];
+        for (let r = 0; r < rows; r++) {
+            const row = [];
+            for (let c = 0; c < cols; c++) {
+                let v;
+                if (dist === 'normal') v = randn();
+                else if (dist === 'uniform') v = Math.random();
+                else v = -Math.log(1 - Math.random());
+                row.push(v);
+            }
+            data.push(row);
+        }
+
+        // Stats
+        const colNames = Array.from({length: cols}, (_, i) => `Col_${i + 1}`);
+        const stats = colNames.map((_, ci) => {
+            const vals = data.map(r => r[ci]).sort((a, b) => a - b);
+            const sum = vals.reduce((a, b) => a + b, 0);
+            const mean = sum / vals.length;
+            const variance = vals.reduce((a, v) => a + (v - mean) ** 2, 0) / vals.length;
+            return { mean, std: Math.sqrt(variance), min: vals[0], max: vals[vals.length - 1] };
+        });
+
+        // Build output
+        let html = '<h3>統計情報</h3><div class="table-wrap"><table><tr><th></th>';
+        colNames.forEach(n => html += `<th>${n}</th>`);
+        html += '</tr>';
+        ['mean', 'std', 'min', 'max'].forEach(key => {
+            const labels = { mean: '平均', std: '標準偏差', min: '最小', max: '最大' };
+            html += `<tr><td><strong>${labels[key]}</strong></td>`;
+            stats.forEach(s => html += `<td>${s[key].toFixed(4)}</td>`);
+            html += '</tr>';
+        });
+        html += '</table></div>';
+
+        // Data table (show first 20 rows)
+        const showRows = Math.min(rows, 20);
+        html += `<h3>データ（先頭${showRows}行 / 全${rows}行）</h3><div class="table-wrap"><table><tr><th>#</th>`;
+        colNames.forEach(n => html += `<th>${n}</th>`);
+        html += '</tr>';
+        for (let r = 0; r < showRows; r++) {
+            html += `<tr><td>${r + 1}</td>`;
+            data[r].forEach(v => html += `<td>${v.toFixed(4)}</td>`);
+            html += '</tr>';
+        }
+        html += '</table></div>';
+
+        // CSV download
+        let csv = colNames.join(',') + '\n';
+        data.forEach(row => csv += row.map(v => v.toFixed(6)).join(',') + '\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        html += `<div style="margin-top:16px;text-align:center"><a class="btn" href="${url}" download="generated_data.csv" style="color:#fff;text-decoration:none">CSVダウンロード</a></div>`;
+
+        document.getElementById('dg-output').innerHTML = html;
+    }
+    </script>
+</body>
+</html>
